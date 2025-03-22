@@ -1,0 +1,31 @@
+{
+    "audio_file": "/path/to/audio.wav",
+    "output_file": "/path/to/output.txt",
+    "whisper_path": "/path/to/whisper-cli",
+    "language": "en",
+    "socket_path": "/path/to/socket.sock",
+    "ollama_url": "http://example.com",
+    "ollama_port": 12345,
+    "presets": [
+        {
+            "name": "Default",
+            "language": "en",
+            "whisper_model": "/path/to/default-whisper-model.bin",
+            "ollama_model": "default-model",
+            "ollama_prompt": "Provide a detailed response to the following text:\n\n"
+        },
+        {
+            "name": "Quick English",
+            "whisper_model": "/path/to/quick-whisper-model.bin",
+            "ollama_model": "quick-model",
+            "ollama_prompt": "Quickly correct the following English text for grammar and punctuation:\n\n"
+        },
+        {
+            "name": "German Correction",
+            "language": "de",
+            "whisper_model": "/path/to/german-whisper-model.bin",
+            "ollama_model": "german-model",
+            "ollama_prompt": "Korrigiere den folgenden deutschen Text für Rechtschreibung und Grammatik:\n\n"
+        }
+    ]
+}
