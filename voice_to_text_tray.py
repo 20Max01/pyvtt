@@ -6,7 +6,6 @@ import threading
 import socket
 import json
 import requests
-import json
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -43,9 +42,21 @@ class WhisperWorker(QThread):
                 "-otxt",
                 "-of", CONFIGURATION["output_file"].replace(".txt", "")
             ]
-            subprocess.run(whisper_cmd, check=True)
-            with open(CONFIGURATION["output_file"], "r") as f:
-                raw_result = f.read().strip().replace("\n", " ")
+            try:
+                subprocess.run(whisper_cmd, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Whisper Fehler: {e}")
+                notify("Fehler", "Ein Fehler mit 'Whisper' ist aufgetreten!")
+                return
+            
+            try:
+                with open(CONFIGURATION["output_file"], "r") as f:
+                    raw_result = f.read().strip().replace("\n", " ")
+            except Exception as e:
+                print(f"Datei Fehler: {e}")
+                notify("Fehler", "Ein Fehler beim Lesen der Whisper-Ausgabe ist aufgetreten!")
+                return
+            
             print("Whisper Transkript erhalten.")
 
             # --- An Ollama schicken ---
@@ -56,19 +67,33 @@ class WhisperWorker(QThread):
             }
             ollama_endpoint = f"{CONFIGURATION['ollama_url']}:{CONFIGURATION['ollama_port']}/api/generate"
             response = requests.post(ollama_endpoint, json=payload)
-            response.raise_for_status()
+
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                print(f"HTTP Fehler: {e}")
+                notify("Fehler", "Ein Fehler bei der Kommunikation mit 'Ollama' ist aufgetreten!")
+                return
+
             formatted_result = response.json().get("response", "").strip()
             formatted_result = "\n".join(line.strip() for line in formatted_result.splitlines())
             print("Ollama Antwort erhalten.")
 
             # Ergebnis ins Clipboard kopieren
-            subprocess.run(["wl-copy"], input=formatted_result.encode(), check=True)
+            try:
+                subprocess.run(["wl-copy"], input=formatted_result.encode(), check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Clipboard Fehler: {e}")
+                notify("Fehler", "Ein Fehler beim Kopieren des Ergebnisses ist aufgetreten!")
+                return
+            
             notify("Spracherkennung", "Transkription abgeschlossen!")
             self.finished.emit(formatted_result)
 
         except Exception as e:
-            notify("Fehler", "Ein Fehler ist aufgetreten!")
             print(f"Fehler: {e}")
+            notify("Fehler", "Ein Fehler ist aufgetreten!")
+            return
 
 # === Socket Listener Thread ===
 class SocketListener(threading.Thread):
@@ -107,7 +132,8 @@ class TrayApp:
         self.preset_actions = []
         self.preset_group = QMenu("Presets")
         for i, preset in enumerate(CONFIGURATION["presets"]):
-            action = QAction(preset["name"], self.menu, checkable=True)
+            action = QAction(preset["name"], self.menu)
+            action.setCheckable(True)
             if i == 0:
                 action.setChecked(True)
             action.triggered.connect(lambda checked, index=i: self.set_preset(index))
