@@ -10,19 +10,25 @@ from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QThread, pyqtSignal
 from configuration import read_configurations
+from notify import notify
 
 CONFIGURATION = read_configurations()
 CURRENT_PRESET = CONFIGURATION["presets"][0]  # Default to first preset
 
-def notify(title: str, message: str) -> None:
-    try:
-        subprocess.run(["notify-send", "-a", "Voice to Text", "-i", "audio-input-microphone", title, message], check=True)
-    except subprocess.CalledProcessError as e:
-        print("Fehler beim Benachrichtigen mit 'notify-send'.")
-        print(e)
-
-# === Worker Thread for Whisper + Ollama ===
 class WhisperWorker(QThread):
+    """
+    A PyQt QThread subclass that handles the transcription of audio files using Whisper 
+    and processes the result with Ollama. The final output is copied to the clipboard 
+    and a signal is emitted upon completion.
+    Signals:
+        finished (pyqtSignal): Emitted with the formatted transcription result as a string 
+        when the process is successfully completed.
+    Methods:
+        run():
+            Executes the transcription process using Whisper, sends the result to Ollama 
+            for further processing, and copies the final output to the clipboard. Handles 
+            errors at various stages and provides notifications for failures.
+    """
     finished = pyqtSignal(str)
 
     def run(self):
