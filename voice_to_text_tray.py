@@ -95,8 +95,24 @@ class WhisperWorker(QThread):
             notify("Fehler", "Ein Fehler ist aufgetreten!")
             return
 
-# === Socket Listener Thread ===
 class SocketListener(threading.Thread):
+    """
+    A thread-based socket listener for handling inter-process communication
+    via a UNIX domain socket. This class listens for specific commands
+    ("toggle", "start", "stop") sent to the socket and triggers corresponding
+    methods in the provided tray application instance.
+
+    Attributes:
+        tray_app (object): The tray application instance that provides methods
+            for handling recording actions.
+        sock (socket.socket): The UNIX domain socket used for communication.
+
+    Methods:
+        run():
+            Continuously listens for incoming connections on the socket.
+            Processes received commands and invokes the appropriate methods
+            on the tray application instance.
+    """
     def __init__(self, tray_app):
         super().__init__(daemon=True)
         self.tray_app = tray_app
@@ -119,8 +135,33 @@ class SocketListener(threading.Thread):
                 elif data == "stop":
                     self.tray_app.stop_recording_if_possible()
 
-# === Tray Application ===
 class TrayApp:
+    """
+    TrayApp is a system tray application that provides voice-to-text functionality. It allows users to manage presets, 
+    start and stop audio recording, and process the recorded audio using a WhisperWorker.
+
+    Attributes:
+        app (QApplication): The main application instance.
+        tray (QSystemTrayIcon): The system tray icon for the application.
+        menu (QMenu): The context menu for the system tray icon.
+        preset_actions (list): A list of QAction objects representing the preset options.
+        preset_group (QMenu): A submenu for managing presets.
+        quit_action (QAction): An action to quit the application.
+        recording_process (subprocess.Popen or None): The process handling audio recording.
+        socket_listener (SocketListener): A listener for socket communication.
+        worker (WhisperWorker or None): A worker thread for processing audio with Whisper.
+
+    Methods:
+        __init__(): Initializes the TrayApp instance, setting up the system tray, menu, and socket listener.
+        set_preset(index): Sets the active preset based on the given index and updates the UI.
+        start_recording(): Starts audio recording using ffmpeg.
+        stop_recording_if_possible(): Stops the audio recording process if it is running.
+        toggle_recording(): Toggles between starting and stopping the audio recording.
+        start_whisper_worker(): Starts a WhisperWorker thread to process the recorded audio.
+        show_result(text): Displays the processed text result from the WhisperWorker.
+        cleanup(): Cleans up resources, such as removing the socket file, before the application exits.
+        run(): Starts the application's event loop.
+    """
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.tray = QSystemTrayIcon(QIcon.fromTheme("audio-input-microphone"))
