@@ -1,10 +1,10 @@
 {
-    "audio_file": "/path/to/audio.wav",
-    "output_file": "/path/to/output.txt",
+    "audio_file": "/tmp/pyvtt_recording.wav",
+    "output_file": "/tmp/pyvtt_transcript.txt",
     "whisper_path": "/path/to/whisper-cli",
     "language": "en",
-    "socket_path": "/path/to/socket.sock",
-    "ollama_url": "http://example.com",
+    "socket_path": "/tmp/pyvtt.sock",
+    "ollama_url": "http://localhost",
     "ollama_port": 12345,
     "presets": [
         {
