@@ -4,6 +4,7 @@ import subprocess
 import os
 import threading
 import socket
+import json
 import requests
 import json
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
@@ -20,8 +21,12 @@ def read_configurations():
 CONFIGURATION = read_configurations()
 CURRENT_PRESET = CONFIGURATION["presets"][0]  # Default to first preset
 
-def notify(title, message):
-    subprocess.run(["notify-send", "-a", "Voice to Text", "-i", "audio-input-microphone", title, message], check=True)
+def notify(title: str, message: str) -> None:
+    try:
+        subprocess.run(["notify-send", "-a", "Voice to Text", "-i", "audio-input-microphone", title, message], check=True)
+    except subprocess.CalledProcessError as e:
+        print("Fehler beim Benachrichtigen mit 'notify-send'.")
+        print(e)
 
 # === Worker Thread for Whisper + Ollama ===
 class WhisperWorker(QThread):
