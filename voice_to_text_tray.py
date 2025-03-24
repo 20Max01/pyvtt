@@ -9,13 +9,7 @@ import requests
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QThread, pyqtSignal
-
-# === Config ===
-def read_configurations():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    settings_path = os.path.join(script_dir, "pyvtt.settings.json")
-    with open(settings_path) as f:
-        return json.load(f)
+from configuration import read_configurations
 
 CONFIGURATION = read_configurations()
 CURRENT_PRESET = CONFIGURATION["presets"][0]  # Default to first preset
